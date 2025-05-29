@@ -7,11 +7,6 @@ on:
       - main
   workflow_dispatch:
 
-# A permissão id-token: write foi removida para evitar confusão com a autenticação por chaves de acesso.
-# Se você tiver outros passos que necessitem de OIDC, esta seção precisará ser ajustada.
-permissions:
-  contents: read # Necessário para actions/checkout
-
 env:
   AWS_REGION: us-east-1 # Substitua pela sua região da AWS onde o ECR está
   ECR_REPOSITORY: blog-tech-backend # Substitua pelo nome do seu repositório ECR
