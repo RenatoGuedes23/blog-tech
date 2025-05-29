@@ -14,4 +14,4 @@ app.include_router(comments.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Bem-vindo ao Blog Tech"}
+    return {"message": "Bem-vindo ao Blog Tech!"}
