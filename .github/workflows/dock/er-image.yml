@@ -1,0 +1,86 @@
+# .github/workflows/deploy_to_ecr.yml
+name: CI - Build and Push Docker Image to ECR
+
+# Define quando o workflow será acionado
+on:
+  push:
+    branches:
+      - main # Aciona o workflow em pushes para a branch 'main'
+      # Exemplo: - develop
+  # Permite acionar manualmente pela UI do GitHub Actions
+  workflow_dispatch:
+
+# Permissões necessárias para o job (especialmente para login no ECR via OIDC)
+permissions:
+  contents: read      # Para fazer checkout do código
+  id-token: write   # Para autenticação com AWS OIDC (recomendado)
+
+env:
+  AWS_REGION: us-east-1 # Substitua pela sua região da AWS onde o ECR está (ex: us-east-1, sa-east-1)
+  ECR_REPOSITORY: blog-tech-backend # Substitua APENAS pelo NOME do seu repositório ECR (ex: meu-app-backend)
+                                     # Não coloque a URL completa aqui, apenas o nome.
+                                     # No seu caso, é 'blog-tech-backend'
+
+jobs:
+  build-and-push-image:
+    name: Build and Push to ECR
+    runs-on: ubuntu-latest # Usa a última versão estável do Ubuntu
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Ação para clonar o repositório
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Substitua pelo ARN da Role IAM que você criou na AWS para o GitHub Actions
+          # Esta Role deve ter permissão para fazer push no ECR e confiar no provedor OIDC do GitHub
+          role-to-assume: arn:aws:iam::776060341642:role/GitHubAction-ECRBlogTechBackendRole # EXEMPLO, SUBSTITUA!
+          aws-region: ${{ env.AWS_REGION }}
+          # Se não estiver usando OIDC/Role (menos seguro):
+          # aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: image_tag
+        run: echo "TAG=${{ github.sha }}" >> $GITHUB_ENV # Define a tag como o SHA do commit (boa prática)
+        # Alternativamente, você pode usar tags como 'latest', datas, ou versões semânticas.
+        # Exemplo para 'latest': echo "TAG=latest" >> $GITHUB_ENV
+        # Exemplo para data: echo "TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }} # Obtém a URL do registro do passo de login (ex: 123456789012.dkr.ecr.us-east-1.amazonaws.com)
+          IMAGE_NAME: ${{ env.ECR_REPOSITORY }} # Nome do repositório ECR (ex: blog-tech-backend)
+        run: |
+          echo "ECR Registry: $ECR_REGISTRY"
+          echo "Image Name: $IMAGE_NAME"
+          echo "Image Tag: $TAG"
+
+          # Constrói a imagem Docker
+          # O Dockerfile deve estar no contexto especificado (ex: ./backend/Dockerfile ou ./Dockerfile)
+          # Ajuste o caminho do contexto de build (o último argumento do docker build) se necessário.
+          # Se seu Dockerfile está em 'backend/Dockerfile' e o contexto é a pasta 'backend':
+          docker build -t $ECR_REGISTRY/$IMAGE_NAME:$TAG ./backend
+          # Se seu Dockerfile está na raiz do repositório e o contexto é a raiz:
+          # docker build -t $ECR_REGISTRY/$IMAGE_NAME:$TAG .
+
+          echo "Pushing image $ECR_REGISTRY/$IMAGE_NAME:$TAG to ECR..."
+          docker push $ECR_REGISTRY/$IMAGE_NAME:$TAG
+
+          # Opcional: Enviar também com a tag 'latest' (se não for sua tag principal)
+          # Certifique-se de que a tag principal (ex: SHA do commit) seja enviada primeiro.
+          if [ "$TAG" != "latest" ]; then
+            echo "Tagging $ECR_REGISTRY/$IMAGE_NAME:$TAG as $ECR_REGISTRY/$IMAGE_NAME:latest"
+            docker tag $ECR_REGISTRY/$IMAGE_NAME:$TAG $ECR_REGISTRY/$IMAGE_NAME:latest
+            echo "Pushing image $ECR_REGISTRY/$IMAGE_NAME:latest to ECR..."
+            docker push $ECR_REGISTRY/$IMAGE_NAME:latest
+          fi
+
+      - name: Logout of Amazon ECR
+        if: always() # Garante que o logout aconteça mesmo se passos anteriores falharem
+        run: docker logout ${{ steps.login-ecr.outputs.registry }}
