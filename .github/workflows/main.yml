@@ -7,10 +7,10 @@ on:
       - main
   workflow_dispatch:
 
-# A permissão id-token: write não é estritamente necessária se você não estiver usando OIDC.
-# Pode ser removida ou mantida se outras ações precisarem dela.
+# A permissão id-token: write foi removida para evitar confusão com a autenticação por chaves de acesso.
+# Se você tiver outros passos que necessitem de OIDC, esta seção precisará ser ajustada.
 permissions:
-  contents: read
+  contents: read # Necessário para actions/checkout
 
 env:
   AWS_REGION: us-east-1 # Substitua pela sua região da AWS onde o ECR está
@@ -31,7 +31,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          # O parâmetro 'audience' foi removido daqui pois não é usado com chaves de acesso diretas
+          # O parâmetro 'audience' não é usado e não deve ser inferido aqui.
 
       - name: Login to Amazon ECR
         id: login-ecr
