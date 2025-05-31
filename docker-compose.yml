@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   backend:
-    build: /home/rneto/personal-projects/blog-tech/blog-tech/backend
+    build: /home/rneto/personal-projects/blog-tech-backend/backend
     container_name: blog_backend
     ports:
       - "8000:8000"
