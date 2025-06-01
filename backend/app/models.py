@@ -9,6 +9,7 @@ class User(Base):
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     nome = Column(String, index=True)
     email = Column(String, unique=True, index=True)
+    cpf = Column(String, unique=True, index=True)
     senha_hash = Column(String)
     data_criacao = Column(DateTime, default=datetime.utcnow)
 

@@ -6,8 +6,8 @@ import uuid
 def get_user(db: Session, user_id: str):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
-def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+def get_user_by_cpf(db: Session, cpf: str):
+    return db.query(models.User).filter(models.User.cpf == cpf).first()
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(
@@ -42,6 +42,12 @@ def create_post(db: Session, post: schemas.PostCreate):
 
 def get_comment(db: Session, comment_id: str):
     return db.query(models.Comment).filter(models.Comment.id == comment_id).first()
+
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Retorna uma lista de usuários com paginação.
+    """
+    return db.query(models.User).offset(skip).limit(limit).all()
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
     db_comment = models.Comment(

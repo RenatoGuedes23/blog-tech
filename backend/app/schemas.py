@@ -8,12 +8,14 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     senha: str
+    cpf: str
 
 class User(UserBase):
-    id: str
-    data_criacao: datetime
-    class Config:
-        orm_mode = True
+    id: int
+    is_active: bool
+    cpf: str
+    posts: list["Post"] = []
+    comments: list["Comment"] = []
 
 class PostBase(BaseModel):
     titulo: str
