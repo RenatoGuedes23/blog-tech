@@ -1,70 +1,47 @@
-from pydantic import BaseModel
-from datetime import datetime
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
+class PostBase(BaseModel):
+    title: str
+    content: str
+
+class PostCreate(PostBase):
+    pass
+
+class Post(PostBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
+class CommentBase(BaseModel):
+    content: str
+
+class CommentCreate(CommentBase):
+    post_id: int
+
+class Comment(CommentBase):
+    id: int
+    owner_id: int
+    post_id: int
+
+    class Config:
+        from_attributes = True
+
 class UserBase(BaseModel):
-    nome: str
-    email: str
+    email: EmailStr
 
 class UserCreate(UserBase):
-    senha: str
-    cpf: str
+    password: str
+    cpf: str # Adicionado CPF para criação
 
 class User(UserBase):
     id: int
     is_active: bool
-    cpf: str
-    posts: list["Post"] = []
-    comments: list["Comment"] = []
+    cpf: str # Adicionado CPF no modelo de resposta
+    posts: List[Post] = []
+    comments: List[Comment] = []
 
-class PostBase(BaseModel):
-    titulo: str
-    conteudo: str
-    tags: Optional[List[str]] = []
-
-class PostCreate(PostBase):
-    autor_id: str
-    categoria_id: str
-
-class Post(PostBase):
-    id: str
-    data_publicacao: datetime
-    likes: int
     class Config:
-        orm_mode = True
-
-class CommentBase(BaseModel):
-    conteudo: str
-
-class CommentCreate(CommentBase):
-    post_id: str
-    autor_id: str
-
-class Comment(CommentBase):
-    id: str
-    data_comentario: datetime
-    class Config:
-        orm_mode = True
-
-class CategoryBase(BaseModel):
-    nome: str
-    descricao: str
-
-class CategoryCreate(CategoryBase):
-    pass
-
-class Category(CategoryBase):
-    id: str
-    class Config:
-        orm_mode = True
-
-class TagBase(BaseModel):
-    nome: str
-
-class TagCreate(TagBase):
-    pass
-
-class Tag(TagBase):
-    id: str
-    class Config:
-        orm_mode = True
+        from_attributes = True

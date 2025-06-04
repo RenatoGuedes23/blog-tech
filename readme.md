@@ -7,3 +7,5 @@ sudo service postgresql stop
 
 apagar todos os conteines
 docker system prune -a --volumes
+
+teste
